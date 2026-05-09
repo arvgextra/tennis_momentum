@@ -52,7 +52,7 @@ def ar_logistic_model(point_seq, lags=5):
         'll_std': ll_scores.std()
     }
 
-def evaluate_across_matches(point_sequences, lags=5, sample=500):
+def evaluate_across_matches(point_sequences, lags=5, sample=None):
     """
     Run baseline vs AR model across many matches.
     Primary test: does momentum (past outcomes) improve prediction?
@@ -60,7 +60,8 @@ def evaluate_across_matches(point_sequences, lags=5, sample=500):
     import random
     random.seed(42)
     sequences = [s for s in point_sequences if len(s) >= 50]
-    sequences = random.sample(sequences, min(sample, len(sequences)))
+    if sample is not None:
+        sequences = random.sample(sequences, min(sample, len(sequences)))
     
     baseline_accs, baseline_lls = [], []
     ar_accs, ar_lls = [], []

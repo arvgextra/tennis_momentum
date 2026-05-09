@@ -1,0 +1,161 @@
+# markov.py 
+Loading data...
+Testing point independence...
+
+Baseline P(server wins): 0.6357
+P(server wins | server won last): 0.6424
+P(server wins | returner won last): 0.6237
+
+Delta after server win: +0.0067
+Delta after returner win: -0.0120
+
+Total points analyzed: 2,086,131
+
+Chi-square test for independence:
+Contingency table (rows=prev, cols=curr):
+R_wins S_wins
+prev R: 284482 471440
+prev S: 471048 846111
+
+Chi2: 726.06, p-value: 0.000000, dof: 1
+Result: Points are NOT independent (reject null hypothesis)
+
+Second-order Markov transitions:
+After RR: P(server wins) = 0.6194  (n=281,622)
+After RS: P(server wins) = 0.6347  (n=469,556)
+After SR: P(server wins) = 0.6264  (n=469,805)
+After SS: P(server wins) = 0.6466  (n=839,048)
+
+
+Within-game vs cross-game transition analysis:
+=== Within-game transitions ===
+  Baseline P(server wins): 0.6355
+  P(server wins | prev=R): 0.6211  delta=-0.0144  (n=688,504)
+  P(server wins | prev=S): 0.6448  delta=+0.0093  (n=1,064,119)
+  Chi2=1015.78, p=0.000000 — NOT independent
+
+=== Cross-game transitions ===
+  Baseline P(server wins): 0.6359
+  P(server wins | prev=R): 0.6500  delta=+0.0141  (n=67,418)
+  P(server wins | prev=S): 0.6321  delta=-0.0038  (n=253,040)
+  Chi2=73.20, p=0.000000 — NOT independent
+
+
+Score-state pressure analysis:
+
+=== ROUTINE (1,013,320 transitions) ===
+  Baseline P(server wins): 0.6362
+  P(server wins | prev=R): 0.6232  delta=-0.0129  (n=399,746)
+  P(server wins | prev=S): 0.6446  delta=+0.0084  (n=613,574)
+  Chi2=477.66, p=0.000000 — NOT independent
+
+=== DEUCE (143,797 transitions) ===
+  Baseline P(server wins): 0.6236
+  P(server wins | prev=R): 0.6232  delta=-0.0003  (n=71,982)
+  P(server wins | prev=S): 0.6239  delta=+0.0003  (n=71,815)
+  Chi2=0.07, p=0.789109 — independent
+
+=== BREAK_POINT (180,252 transitions) ===
+  Baseline P(server wins): 0.6063
+  P(server wins | prev=R): 0.6043  delta=-0.0020  (n=142,462)
+  P(server wins | prev=S): 0.6139  delta=+0.0076  (n=37,790)
+  Chi2=11.66, p=0.000637 — NOT independent
+
+=== SERVER_GP (415,254 transitions) ===
+  Baseline P(server wins): 0.6507
+  P(server wins | prev=R): 0.6398  delta=-0.0109  (n=74,314)
+  P(server wins | prev=S): 0.6530  delta=+0.0024  (n=340,940)
+  Chi2=47.00, p=0.000000 — NOT independent
+
+
+Game-level momentum:
+Hold rate: 0.7849  (n=307,408 consecutive same-server game pairs)
+  P(hold | prev broke): 0.7256  delta=-0.0593  (n=63,342)
+  P(hold | prev held): 0.8003  delta=+0.0154  (n=244,066)
+Chi2=1662.84, p=0.000000 — NOT independent
+
+# ar model 
+Loading data...
+Evaluating baseline vs AR logistic model...
+
+Evaluated on 500 matches
+
+Primary metric: Log Loss (lower = better probability calibration)
+Secondary metric: Accuracy (insensitive near 63% majority class)
+
+Model                       Log Loss   Accuracy
+---------------------------------------------
+Baseline (majority)           0.6500     0.6350
+AR Logistic (lag=5)           0.6668     0.6183
+
+Delta log loss:  +0.0168  (AR worse)
+Delta accuracy:  -0.0167  (AR worse)
+
+Conclusion: AR model does NOT improve over baseline
+
+# hmm
+Training on 500 matches
+Best log-likelihood: -54267.21
+Converged: True
+
+Emission probabilities (P(server wins) per state):
+  State 0 [LOW momentum]: P(server wins) = 0.5868
+  State 1 [HIGH momentum]: P(server wins) = 0.7719
+
+Transition matrix:
+  From state 0: [0.88301055 0.11698945]
+  From state 1: [0.32479113 0.67520887]
+
+Average state duration (points):
+  State 0: 8.5 points
+  State 1: 3.1 points
+
+# changepoint
+Loading data and model...
+
+Analyzing: Robin Haase vs Marin Cilic
+Score: 4-6 6-4 6-3, Points: 194
+HMM state counts: [194]
+
+Change points detected at smoothed points: [48, 66, 123, 140]
+(Corresponds to raw points: [58, 76, 133, 150])
+
+Momentum segments:
+  Points 0-48: avg serve win rate = 0.729
+  Points 48-66: avg serve win rate = 0.433
+  Points 66-123: avg serve win rate = 0.698
+  Points 123-140: avg serve win rate = 0.318
+  Points 140-185: avg serve win rate = 0.609
+
+==================================================
+Olivier Rochus vs Fabio Fognini | 6-4 6-1
+
+Change points detected at smoothed points: [60, 79]
+(Corresponds to raw points: [70, 89])
+
+Momentum segments:
+  Points 0-60: avg serve win rate = 0.563
+  Points 60-79: avg serve win rate = 0.337
+  Points 79-105: avg serve win rate = 0.546
+
+==================================================
+Marin Cilic vs Andreas Seppi | 6-1 6-3
+
+Change points detected at smoothed points: []
+(Corresponds to raw points: [])
+
+Momentum segments:
+  Points 0-90: avg serve win rate = 0.610
+
+==================================================
+Alexandr Dolgopolov vs Albert Ramos | 6-3 7-5
+
+Change points detected at smoothed points: [44, 63]
+(Corresponds to raw points: [54, 73])
+
+Momentum segments:
+  Points 0-44: avg serve win rate = 0.598
+  Points 44-63: avg serve win rate = 0.826
+  Points 63-122: avg serve win rate = 0.614
+
+

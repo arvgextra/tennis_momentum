@@ -29,8 +29,8 @@ def parse_pbp_games(pbp_string):
                 games.append(points)
     return games
 
-def load_all_matches(data_dir='data/'):
-    files = glob.glob(f'{data_dir}pbp_matches_atp_main_*.csv')
+def load_all_matches(data_dir='data/', pattern='pbp_matches_atp_main_*.csv'):
+    files = glob.glob(f'{data_dir}{pattern}')
     dfs = []
     for f in files:
         df = pd.read_csv(f)
@@ -44,9 +44,10 @@ def load_all_matches(data_dir='data/'):
     combined = combined[combined['match_length'] > 0].reset_index(drop=True)
     return combined
 
-df = load_all_matches()
-print(f"Total matches: {len(df)}")
-print(f"Total points: {df['match_length'].sum():,}")
-print(f"Avg points per match: {df['match_length'].mean():.0f}")
-print(f"Date range: {df['date'].min()} to {df['date'].max()}")
-print(f"\nSample:\n{df[['server1', 'server2', 'score', 'match_length']].head()}")
+if __name__ == "__main__":
+    df = load_all_matches()
+    print(f"Total matches: {len(df)}")
+    print(f"Total points: {df['match_length'].sum():,}")
+    print(f"Avg points per match: {df['match_length'].mean():.0f}")
+    print(f"Date range: {df['date'].min()} to {df['date'].max()}")
+    print(f"\nSample:\n{df[['server1', 'server2', 'score', 'match_length']].head()}")

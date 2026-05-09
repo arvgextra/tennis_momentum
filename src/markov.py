@@ -86,6 +86,39 @@ def chi_square_independence_test(point_sequences):
     else:
         print("Result: Points are independent (fail to reject null)")
 
+def get_game_score_states(game_points):
+    """
+    Returns (outcome, score_category) for each point in a game.
+    score_category is the situation BEFORE the point is played.
+    Categories: break_point, server_gp, deuce, server_leads, returner_leads, tied
+    """
+    sp, rp = 0, 0
+    result = []
+    for outcome in game_points:
+        if sp >= 3 and rp >= 3:
+            if sp == rp:
+                cat = 'deuce'
+            elif sp > rp:
+                cat = 'server_gp'
+            else:
+                cat = 'break_point'
+        elif rp == 3 and sp < 3:
+            cat = 'break_point'
+        elif sp == 3 and rp < 3:
+            cat = 'server_gp'
+        elif sp == rp:
+            cat = 'tied'
+        elif sp > rp:
+            cat = 'server_leads'
+        else:
+            cat = 'returner_leads'
+        result.append((outcome, cat))
+        if outcome == 1:
+            sp += 1
+        else:
+            rp += 1
+    return result
+
 def _print_transition_table(counts):
     total = counts.sum()
     baseline = counts[:, 1].sum() / total
@@ -125,6 +158,58 @@ def test_within_vs_cross_game(game_sequences_list):
     print("\n=== Cross-game transitions ===")
     _print_transition_table(cross)
 
+def test_score_state_pressure(game_sequences_list):
+    """
+    Tests whether within-game momentum differs by score state.
+    Key question: does the streak-persistence effect concentrate at break points,
+    or is it uniform? If momentum is psychological, pressure should amplify it.
+    """
+    counts = {
+        'break_point': np.zeros((2, 2), dtype=int),
+        'server_gp':   np.zeros((2, 2), dtype=int),
+        'deuce':       np.zeros((2, 2), dtype=int),
+        'routine':     np.zeros((2, 2), dtype=int),
+    }
+    for match_games in game_sequences_list:
+        for game in match_games:
+            scored = get_game_score_states(game)
+            for i in range(1, len(scored)):
+                prev_outcome = scored[i-1][0]
+                curr_outcome, curr_cat = scored[i]
+                key = curr_cat if curr_cat in counts else 'routine'
+                counts[key][prev_outcome][curr_outcome] += 1
+
+    for cat in ['routine', 'deuce', 'break_point', 'server_gp']:
+        n = counts[cat].sum()
+        print(f"\n=== {cat.upper()} ({n:,} transitions) ===")
+        _print_transition_table(counts[cat])
+
+def test_game_level_momentum(game_sequences_list):
+    """
+    Tests momentum at game level: does a player's previous service game outcome
+    predict their next service game outcome?
+    Separates by server (even/odd index) to avoid the serve-alternation confound.
+    Hold=1, break=0.
+    """
+    counts = np.zeros((2, 2), dtype=int)
+    for match_games in game_sequences_list:
+        outcomes = [game[-1] for game in match_games if game]
+        for server_games in [outcomes[0::2], outcomes[1::2]]:
+            for i in range(1, len(server_games)):
+                counts[server_games[i-1]][server_games[i]] += 1
+
+    total = counts.sum()
+    hold_rate = counts[:, 1].sum() / total
+    print(f"Hold rate: {hold_rate:.4f}  (n={total:,} consecutive same-server game pairs)")
+    for prev in [0, 1]:
+        label = 'held' if prev == 1 else 'broke'
+        row_total = counts[prev].sum()
+        if row_total > 0:
+            p = counts[prev][1] / row_total
+            print(f"  P(hold | prev {label}): {p:.4f}  delta={p - hold_rate:+.4f}  (n={row_total:,})")
+    chi2, p_value, _, _ = stats.chi2_contingency(counts)
+    print(f"Chi2={chi2:.2f}, p={p_value:.6f} — {'NOT independent' if p_value < 0.05 else 'independent'}")
+
 if __name__ == "__main__":
     import sys
     sys.path.append('src')
@@ -140,3 +225,9 @@ if __name__ == "__main__":
 
     print("\n\nWithin-game vs cross-game transition analysis:")
     test_within_vs_cross_game(df['point_games'].tolist())
+
+    print("\n\nScore-state pressure analysis:")
+    test_score_state_pressure(df['point_games'].tolist())
+
+    print("\n\nGame-level momentum:")
+    test_game_level_momentum(df['point_games'].tolist())

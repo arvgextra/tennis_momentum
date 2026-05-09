@@ -1,6 +1,5 @@
 import numpy as np
 import pickle
-from scipy.special import betaln
 import ruptures as rpt
 
 def load_hmm():
@@ -56,20 +55,6 @@ def plot_momentum(match_row, window=10):
         print(f"  Points {prev}-{bp}: avg serve win rate = {segment.mean():.3f}")
         prev = bp
 
-def analyze_match(model, point_seq, threshold=0.3):
-    """
-    Run both HMM decoding and BOCPD on a single match.
-    Returns state sequence, change point probabilities, and detected change points.
-    """
-    states = hmm_state_sequence(model, point_seq)
-    change_probs = bocpd(point_seq)
-    change_points = np.where(change_probs > threshold)[0]
-
-    return {
-        'states': states,
-        'change_probs': change_probs,
-        'change_points': change_points
-    }
 if __name__ == "__main__":
     import sys
     sys.path.append('src')
@@ -90,13 +75,6 @@ if __name__ == "__main__":
 
     plot_momentum(match)
 
-    match = df.iloc[1]
-    sets = match['pbp'].split('.')
-    for i, s in enumerate(sets):
-        games = s.split(';')
-        points_in_set = sum(len([c for c in g if c in 'SRAD']) for g in games)
-        print(f"Set {i+1}: {points_in_set} points, games={len(games)}")
-    
     for idx in [0, 2, 3]:
         match = df.iloc[idx]
         print(f"\n{'='*50}")
